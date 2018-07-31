@@ -5,6 +5,8 @@ You can find a complete usage example here : https://github.com/grz0zrg/portfoli
 
 It provide a simple way to produce static HTML pages content from a combination of JSON data definitions and HTML templates, tags related to JSON definition in the form of `{tag}` can be used inside the template files.
 
+It also generate the sitemap file.
+
 While it lack many features, this tool work great if your website has a simple structure with a navigation menu and pages listing items, ideal as a portfolio generator.
 
 ### Example
@@ -18,9 +20,13 @@ Directory structure (folders) :
   * nav.html
   * items.html
 * dist
-  * intex.html
+  * get  *this is a folder where you place all downloadables stuff, this folder is included in the sitemap*
+  * index.html
 
 
+#### sitemap
+
+The sitemap will be automatically generated from the pages definition AND from all files in the `get` folder (recursively), all pages are given priority 1.0 with monthly update (can be changed in the source).
 
 #### nav.json
 
@@ -144,6 +150,6 @@ You can also use the tag `{date}` to place the generation date.
     </body>
 ```
 
-Then you call the tool : `python static_build.py json/nav.json json/items.json dist/index.html`
+Then you call the tool : `python static_build.py json/nav.json json/items.json dist/index.html https://www.myportfolio.com`
 
-All generated pages can found in the `dist` folder.
+All generated pages can be found in the `dist` folder along with the `sitemap.xml` file.

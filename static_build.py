@@ -7,12 +7,9 @@
 # For an usage example : https://github.com/grz0zrg/portfolio
 #
 # It provide a simple way to produce generated HTML pages content from a combination of JSON data definitions and HTML templates.
+# It also generate a sitemap, the sitemap is constructed from the given URL in the program arguments.
 #
-# The first argument is a JSON file (which should be placed in a 'json' directory) which list all the pages to be generated, it may come with a HTML template to build a navigation menu for example.
-# The second argument is a JSON file (which should be placed in a 'json' directory) which list all the specific content attached to a page, all JSON files are linked to a HTML template file of the same name.
-# The last argument is the regular HTML skeleton page with tags indicating where to place the navigation menu and content.
-#
-# Usage: static_build.py json/categories.json json/items.json dist/index.html
+# Usage: static_build.py json/categories.json json/items.json dist/index.html https://www.myportfolio.com
 
 import os
 import re
@@ -21,6 +18,7 @@ import glob
 import json
 import codecs
 import datetime
+from xml.etree import ElementTree as ET
 
 def gen_nav_menu(html_template_file, pages):
     with open(html_template_file, 'r') as content_file:
@@ -87,13 +85,14 @@ def gen_content(html_template_file, pages, content_json):
 work_directory = os.getcwd()
 
 if len(sys.argv) <= 3:
-    print("Usage example: python static_build.py categories.json items.json dist/index.html")
+    print("Usage example: python static_build.py categories.json items.json dist/index.html https://www.myportfolio.com")
 else:
     print("\n Static site builder :\n")
 
     json_pages = sys.argv[1]
     json_content = sys.argv[2]
     html_file = sys.argv[3]
+    site_url = sys.argv[4]
 
     (json_pages_name, tmp_ext) = os.path.splitext(json_pages)
     
@@ -144,7 +143,18 @@ else:
 
     index = 0
     
-    # construct all HTML pages from the informations gathered
+    # construct all HTML pages + sitemap from the informations gathered
+    urlset_xml = ET.Element("urlset", xmlns="http://www.sitemaps.org/schemas/sitemap/0.9")
+    url_tag_xml = ET.SubElement(urlset_xml, "url")
+    loc_tag_xml = ET.SubElement(url_tag_xml, "loc")
+    loc_tag_xml.text = site_url + "/"
+    lastmod_tag_xml = ET.SubElement(url_tag_xml, "lastmod")
+    lastmod_tag_xml.text = today.strftime('%Y-%m-%d')
+    changefreq_tag_xml = ET.SubElement(url_tag_xml, "changefreq")
+    changefreq_tag_xml.text = "monthly"
+    priority_tag_xml = ET.SubElement(url_tag_xml, "priority")
+    priority_tag_xml.text = "1.00"
+
     for page_name in pages:
         page_name = page_name["name"].replace(" ", "_")
 
@@ -162,5 +172,39 @@ else:
         f.close()
 
         index += 1
+
+        # sitemap
+        url_tag_xml = ET.SubElement(urlset_xml, "url")
+        loc_tag_xml = ET.SubElement(url_tag_xml, "loc")
+        loc_tag_xml.text = site_url + "/" + page_name + ".html"
+        lastmod_tag_xml = ET.SubElement(url_tag_xml, "lastmod")
+        lastmod_tag_xml.text = today.strftime('%Y-%m-%d')
+        changefreq_tag_xml = ET.SubElement(url_tag_xml, "changefreq")
+        changefreq_tag_xml.text = "monthly"
+        priority_tag_xml = ET.SubElement(url_tag_xml, "priority")
+        priority_tag_xml.text = "1.00"
+
+    # construct sitemap for downloadable documents as well
+    print("\n   Producing sitemap...")
+
+    filenames_list = []
+    for (dirpath, dirnames, filenames) in os.walk("dist/get/"):
+        filenames = [dirpath.replace("dist/", "") + s for s in filenames]
+        filenames_list.extend(filenames)
+        break
+    
+    for filename in filenames_list:
+        url_tag_xml = ET.SubElement(urlset_xml, "url")
+        loc_tag_xml = ET.SubElement(url_tag_xml, "loc")
+        loc_tag_xml.text = site_url + "/" + filename
+        lastmod_tag_xml = ET.SubElement(url_tag_xml, "lastmod")
+        lastmod_tag_xml.text = today.strftime('%Y-%m-%d')
+        changefreq_tag_xml = ET.SubElement(url_tag_xml, "changefreq")
+        changefreq_tag_xml.text = "monthly"
+        priority_tag_xml = ET.SubElement(url_tag_xml, "priority")
+        priority_tag_xml.text = "1.00"
+    
+    tree = ET.ElementTree(urlset_xml)
+    tree.write("dist/sitemap.xml", encoding='utf-8', xml_declaration=True)
 
     print("\n Done.")
