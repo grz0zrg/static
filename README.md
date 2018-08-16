@@ -3,7 +3,7 @@ This Python 2.x tool was built to produce my portfolio at : http://www.onirom.fr
 
 You can find a complete usage example here : https://github.com/grz0zrg/portfolio
 
-It provide a simple way to produce static HTML pages content from a combination of JSON data definitions and HTML templates, tags related to JSON definition in the form of `{tag}` can be used inside the template files.
+It provide a simple way to produce static HTML pages content from a combination of JSON data definitions and HTML templates, tags related to JSON definition in the form of `{tag}` can be used inside the template files along with simple conditional tags.
 
 It also generate the sitemap file.
 
@@ -20,7 +20,8 @@ Directory structure (folders) :
   * nav.html
   * items.html
 * dist
-  * get  *this is a folder where you place all downloadables stuff, this folder is included in the sitemap*
+  * get
+    * *this is a folder where you place all downloadables stuff, all the content of this folder will be included in the sitemap*
   * index.html
 
 
@@ -30,7 +31,7 @@ The sitemap will be automatically generated from the pages definition AND from a
 
 #### nav.json
 
-This list all the pages to be generated, in this case a `software.html` and `library.html` will be produced, page name with space character are converted automatically into a page name with space replaced by an underscore.
+This list all the pages to be generated, in this case a `software.html` and `library.html` will be produced, page name with space character are converted automatically with space replaced by an underscore so that "software library" produce a "software_library.html" file.
 
 ```json
 {
@@ -52,7 +53,7 @@ The template file linked to `nav.json` which will generate a list of items, allo
 * `name`
   * The page name
 * `_name`
-  * The page name as it was defined in the `nav.json` file (without conversions)
+  * The page name as it was defined in the `nav.json` file (without space character conversion)
 * `active`
   * This will be replaced by the string `active` if this item correspond to the generated page (so it can be highlighted as current page with a CSS class or something)
 
@@ -75,7 +76,6 @@ This list all available definitions for each pages, all properties listed here c
             "thumb_url": "assets/thumb/my_software.png",
             "thumb_alt": "Software example",
             "link": "https://mysoftware.com",
-            "thumb_alt": "Software example",
             "title": "Software example",
             "tags": ["C", "Embedded systems", "REST", "JSON"]
         }
@@ -85,7 +85,6 @@ This list all available definitions for each pages, all properties listed here c
             "thumb_url": "assets/thumb/mylibrary.png",
             "thumb_alt": "Library example",
             "link": "https://mylibrary.com",
-            "thumb_alt": "Library example",
             "title": "Library example",
             "tags": ["C/C++", "Linux"]
         }
@@ -93,13 +92,15 @@ This list all available definitions for each pages, all properties listed here c
 }
 ```
 
+**Note** : You can self-reference an item tag within itself, for example you can do : `"title": "{link}"`
+
 #### items.html
 
 The items template file linked to `items.json`
 
 ```html
 <li class="item">
-    <a href="{link}" title="{link}" target="_blank" rel="noopener">
+    %%link<a href="{link}" title="{link}" target="_blank" rel="noopener">link%%
         <img class="item-thumb" src="{thumb_url}" alt="{thumb_alt}"/>
         <div class="item-label">
             <span class="item-title">
@@ -111,9 +112,15 @@ The items template file linked to `items.json`
                 </div>
             </div>
         </div>
-    </a>
+    %%link</a>link%%
 </li>
 ```
+
+##### %%tag
+
+Simple conditional which indicate that the content enclosed between **%%tag** and **tag%%** should be removed if **tag** is empty; this remove the link element if the link is empty in the example above.
+
+**Note** : An item `{tag}` is removed if it exist in the template file but not in the definition file.
 
 #### index.html
 

@@ -7,7 +7,7 @@
 # For an usage example : https://github.com/grz0zrg/portfolio
 #
 # It provide a simple way to produce generated HTML pages content from a combination of JSON data definitions and HTML templates.
-# It also generate a sitemap, the sitemap is constructed from the given URL in the program arguments.
+# It also generate a sitemap, the sitemap is constructed from the given base URL in the program arguments.
 #
 # Usage: static_build.py json/categories.json json/items.json dist/index.html https://www.myportfolio.com
 
@@ -68,8 +68,22 @@ def gen_content(html_template_file, pages, content_json):
 
         for content in content_obj:
             html_temp = html_template
-            
+
             for key in content:
+                # replace tags within definition
+                for rkey in content:
+                    if type(content[rkey]) is not list:
+                        if type(content[key]) is not list:
+                            content[key] = content[key].replace("{" + rkey + "}", content[rkey])
+
+                # look for simple conditional
+                if len(content[key]) == 0:
+                    html_temp = re.sub('%%' + key + '.+' + key + '%%', "", html_temp)
+
+                html_temp = html_temp.replace('%%' + key, "")
+                html_temp = html_temp.replace(key + '%%', "")
+
+                # wrap list within <div> before replacing tags
                 if type(content[key]) is list:
                     tmp_content = ''.join('<div>{0}</div>'.format(w) for w in content[key])
                 else:
@@ -77,6 +91,9 @@ def gen_content(html_template_file, pages, content_json):
                 html_temp = html_temp.replace("{" + key + "}", tmp_content)
 
             html_output += html_temp
+
+        # final pass, remove all unused tags
+        html_output = re.sub('{.*}', "", html_output)
 
         contents.append(html_output)
     
